@@ -42,28 +42,28 @@ def on_pending_tickers(tickers):
         put_strike = 0
         for position in positions:
             if position.contract.symbol == symbol:
-                print(symbol)
-                print(position.contract.strike)
+                print(symbol + " strike: " + str(position.contract.strike))
                 put_strike = position.contract.strike
-                print(t.contract.symbol)
-                print(t.contract.secType)
-                print(t.contract.conId)
                 chains = ib.reqSecDefOptParams(t.contract.symbol, '', t.contract.secType, t.contract.conId)
                 chain = next(c for c in chains if c.exchange == 'SMART')
                 print(chain)
                 strikes = [strike for strike in chain.strikes
-                           if strike == put_strike]
+                           if strike == int(put_strike)]
                 print(strikes)
-                expirations = sorted(exp for exp in chain.expirations)[:3]
+                expirations = sorted(exp for exp in chain.expirations)  # [:3] # limits to 3 expirations
                 # rights = ['P', 'C']
                 rights = ['P']
                 contracts = [Option(symbol, expiration, strike, right, 'SMART', tradingClass=symbol)
                              for right in rights
                              for expiration in expirations
                              for strike in strikes]
-                # print(contracts)
-                return contracts
-
+                print(contracts)
+                contracts = ib.qualifyContracts(*contracts)
+                contract_tickers = ib.reqTickers(*contracts)
+                ib.sleep(10)
+                for contract_ticker in contract_tickers:
+                    print("OPTION CONTRACT")
+                    print(contract_ticker)
         # print(symbol)
         # print(t.marketPrice())
         # chains = ib.reqSecDefOptParams(t.contract.symbol, '', t.contract.secType, t.contract.conId)
@@ -88,12 +88,12 @@ for contract in contracts:
     print(contract.symbol + " connected")
 
 #  get the tickers
-# tickers = ib.reqTickers(*contracts)
+tickers = ib.reqTickers(*contracts)
 #
 # #  create an event handler for when the ticker updates
 # # ib.pendingTickersEvent += on_pending_tickers
-# ib.sleep(10)
-# on_pending_tickers(tickers)
+ib.sleep(10)
+on_pending_tickers(tickers)
 
-put_contracts = get_put_contracts("AFL")
-print(put_contracts)
+# put_contracts = get_put_contracts("AFL")
+# print(put_contracts)
